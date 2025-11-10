@@ -1,11 +1,11 @@
 import base64
 import json
 import os
-import requests
-import re
+from datetime import datetime
 from io import BytesIO
 
 import numpy as np
+import requests
 import torch
 from PIL import Image
 
@@ -43,6 +43,13 @@ class ComfyUI_NanoBanana_V2:
             if self.api_key is None:
                 config = get_config()
                 self.api_key = config.get("GEMINI_API_KEY")
+
+    @classmethod
+    def IS_CHANGED(self, **kwargs) -> str:
+        # 返回任意的随机数即可
+        prompt = kwargs.get("prompt")
+        md5_hash = hash(prompt)
+        return str(md5_hash) + ":" + str(datetime.now().time())
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -175,7 +182,7 @@ class ComfyUI_NanoBanana_V2:
 
     def build_prompt_for_operation(self, prompt, operation, has_references=False):
         """Build optimized prompt based on operation type"""
-        
+
         base_quality = "Generate a high-quality, photorealistic image"
 
         if operation == "generate":
@@ -205,14 +212,14 @@ class ComfyUI_NanoBanana_V2:
         """Parse Server-Sent Events response format"""
         images = []
         text_content = ""
-        
+
         # Split by lines and process data: lines
         lines = response_text.strip().split('\n')
         for line in lines:
             if line.startswith('data: '):
                 try:
                     json_data = json.loads(line[6:])  # Remove 'data: ' prefix
-                    
+
                     if 'candidates' in json_data:
                         for candidate in json_data['candidates']:
                             if 'content' in candidate and 'parts' in candidate['content']:
@@ -220,20 +227,21 @@ class ComfyUI_NanoBanana_V2:
                                     # Extract text
                                     if 'text' in part:
                                         text_content += part['text']
-                                    
+
                                     # Extract images
                                     if 'inlineData' in part and 'data' in part['inlineData']:
                                         image_data = base64.b64decode(part['inlineData']['data'])
                                         images.append(image_data)
-                                        
+
                 except json.JSONDecodeError:
                     continue
-        
+
         return images, text_content
 
-    def call_nano_banana_api(self, prompt, image_parts, temperature, max_output_tokens, top_p, enable_safety, api_endpoint, model_id):
+    def call_nano_banana_api(self, prompt, image_parts, temperature, max_output_tokens, top_p, enable_safety,
+                             api_endpoint, model_id):
         """Make API call using streaming endpoint like the curl example"""
-        
+
         if not self.api_key:
             raise ValueError("No API key provided. Gemini 2.5 Flash Image requires a PAID API key.")
 
@@ -264,7 +272,7 @@ class ComfyUI_NanoBanana_V2:
                     "threshold": "OFF"
                 },
                 {
-                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT", 
+                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
                     "threshold": "OFF"
                 },
                 {
@@ -287,15 +295,15 @@ class ComfyUI_NanoBanana_V2:
         try:
             response = requests.post(url, json=payload, headers=headers, timeout=120)
             response.raise_for_status()
-            
+
             # Parse the SSE response
             images, text_content = self.parse_sse_response(response.text)
-            
+
             if not images:
                 raise RuntimeError(f"No images generated. Response text: {text_content[:200]}...")
-            
+
             return images, text_content
-            
+
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"API request failed: {str(e)}")
         except Exception as e:
@@ -303,7 +311,8 @@ class ComfyUI_NanoBanana_V2:
 
     def nano_banana_generate(self, prompt, operation, reference_image_1=None, reference_image_2=None,
                              reference_image_3=None, reference_image_4=None, reference_image_5=None, api_key="",
-                             api_endpoint="litellm-internal.123u.com/vertex_ai", model_id="gemini-2.5-flash-image-preview",
+                             api_endpoint="litellm-internal.123u.com/vertex_ai",
+                             model_id="gemini-2.5-flash-image-preview",
                              batch_count=1, temperature=1.0, max_output_tokens=32768, top_p=0.95, enable_safety=False):
 
         # Validate and set API key
@@ -312,7 +321,8 @@ class ComfyUI_NanoBanana_V2:
             save_config({"GEMINI_API_KEY": self.api_key})
 
         if not self.api_key:
-            raise ValueError("NANO BANANA ERROR: No API key provided!\n\nGemini 2.5 Flash Image requires a PAID API key.\nGet yours at: https://aistudio.google.com/app/apikey\nNote: Free tier users cannot access image generation models.")
+            raise ValueError(
+                "NANO BANANA ERROR: No API key provided!\n\nGemini 2.5 Flash Image requires a PAID API key.\nGet yours at: https://aistudio.google.com/app/apikey\nNote: Free tier users cannot access image generation models.")
 
         try:
             # Process reference images (up to 5)
@@ -339,23 +349,24 @@ class ComfyUI_NanoBanana_V2:
 
             # Track all generated images
             all_generated_images = []
-            
+
             # Generate images for each batch
             for i in range(batch_count):
                 try:
                     operation_log += f"Batch {i + 1}: Making API call...\n"
-                    
+
                     # Make API call
                     batch_images, response_text = self.call_nano_banana_api(
-                        final_prompt, image_parts, temperature, max_output_tokens, top_p, enable_safety, api_endpoint, model_id
+                        final_prompt, image_parts, temperature, max_output_tokens, top_p, enable_safety, api_endpoint,
+                        model_id
                     )
-                    
+
                     all_generated_images.extend(batch_images)
                     operation_log += f"Batch {i + 1}: Generated {len(batch_images)} images\n"
-                    
+
                     if response_text:
                         operation_log += f"Response text: {response_text[:100]}...\n"
-                        
+
                 except Exception as batch_error:
                     operation_log += f"Batch {i + 1} failed: {str(batch_error)}\n"
                     if i == 0:  # If first batch fails, raise error
