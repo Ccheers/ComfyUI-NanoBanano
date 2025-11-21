@@ -95,7 +95,7 @@ class ComfyUI_NanoBanana_V2:
                     "tooltip": "API endpoint URL"
                 }),
                 "model_id": ("STRING", {
-                    "default": "gemini-2.5-flash-image-preview",
+                    "default": "gemini-3-pro-image-preview",
                     "tooltip": "Model ID to use"
                 }),
                 "batch_count": ("INT", {
@@ -129,6 +129,18 @@ class ComfyUI_NanoBanana_V2:
                 "enable_safety": ("BOOLEAN", {
                     "default": False,
                     "tooltip": "Enable content safety filters"
+                }),
+                "aspect_ratio": (["1:1", "3:2", "2:3", "3:4", "4:3", "16:9", "9:16", "21:9", "4:5", "5:4"], {
+                    "default": "1:1",
+                    "tooltip": "Image aspect ratio"
+                }),
+                "image_size": (["1K", "2K", "4K"], {
+                    "default": "1K",
+                    "tooltip": "Image resolution size"
+                }),
+                "output_mime_type": (["image/png", "image/jpeg"], {
+                    "default": "image/png",
+                    "tooltip": "Output image format"
                 }),
             }
         }
@@ -239,7 +251,7 @@ class ComfyUI_NanoBanana_V2:
         return images, text_content
 
     def call_nano_banana_api(self, prompt, image_parts, temperature, max_output_tokens, top_p, enable_safety,
-                             api_endpoint, model_id):
+                             api_endpoint, model_id, aspect_ratio, image_size, output_mime_type):
         """Make API call using streaming endpoint like the curl example"""
 
         if not self.api_key:
@@ -260,7 +272,15 @@ class ComfyUI_NanoBanana_V2:
                 "temperature": temperature,
                 "maxOutputTokens": max_output_tokens,
                 "responseModalities": ["TEXT", "IMAGE"],
-                "topP": top_p
+                "topP": top_p,
+                "imageConfig": {
+                    "aspectRatio": aspect_ratio,
+                    "imageSize": image_size,
+                    "imageOutputOptions": {
+                        "mimeType": output_mime_type,
+                    },
+                    "personGeneration": "ALLOW_ALL",
+                }
             }
         }
 
@@ -312,8 +332,9 @@ class ComfyUI_NanoBanana_V2:
     def nano_banana_generate(self, prompt, operation, reference_image_1=None, reference_image_2=None,
                              reference_image_3=None, reference_image_4=None, reference_image_5=None, api_key="",
                              api_endpoint="litellm-internal.123u.com/vertex_ai",
-                             model_id="gemini-2.5-flash-image-preview",
-                             batch_count=1, temperature=1.0, max_output_tokens=32768, top_p=0.95, enable_safety=False):
+                             model_id="gemini-3-pro-image-preview",
+                             batch_count=1, temperature=1.0, max_output_tokens=32768, top_p=0.95, enable_safety=False,
+                             aspect_ratio="1:1", image_size="2K", output_mime_type="image/png"):
 
         # Validate and set API key
         if api_key.strip():
@@ -343,6 +364,9 @@ class ComfyUI_NanoBanana_V2:
             operation_log += f"Max Output Tokens: {max_output_tokens}\n"
             operation_log += f"Top P: {top_p}\n"
             operation_log += f"Safety Filters: {enable_safety}\n"
+            operation_log += f"Aspect Ratio: {aspect_ratio}\n"
+            operation_log += f"Image Size: {image_size}\n"
+            operation_log += f"Output Format: {output_mime_type}\n"
             operation_log += f"API Endpoint: {api_endpoint}\n"
             operation_log += f"Model: {model_id}\n"
             operation_log += f"Prompt: {final_prompt[:150]}...\n\n"
@@ -358,7 +382,7 @@ class ComfyUI_NanoBanana_V2:
                     # Make API call
                     batch_images, response_text = self.call_nano_banana_api(
                         final_prompt, image_parts, temperature, max_output_tokens, top_p, enable_safety, api_endpoint,
-                        model_id
+                        model_id, aspect_ratio, image_size, output_mime_type
                     )
 
                     all_generated_images.extend(batch_images)
