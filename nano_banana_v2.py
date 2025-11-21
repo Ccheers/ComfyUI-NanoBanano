@@ -271,7 +271,7 @@ class ComfyUI_NanoBanana_V2:
             "generationConfig": {
                 "temperature": temperature,
                 "maxOutputTokens": max_output_tokens,
-                "responseModalities": ["TEXT", "IMAGE"],
+                "responseModalities": ["IMAGE"],
                 "topP": top_p,
                 "imageConfig": {
                     "aspectRatio": aspect_ratio,
