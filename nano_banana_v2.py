@@ -313,7 +313,7 @@ class ComfyUI_NanoBanana_V2:
         url = f"https://{api_endpoint}/v1/projects/huanle-gemini/locations/global/publishers/google/models/{model_id}:streamGenerateContent"
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=120)
+            response = requests.post(url, json=payload, headers=headers, timeout=600)
             response.raise_for_status()
 
             # Parse the SSE response
