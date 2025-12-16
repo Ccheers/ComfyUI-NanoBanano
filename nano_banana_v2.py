@@ -311,7 +311,7 @@ class ComfyUI_NanoBanana_V2:
             "Authorization": f"Bearer {self.api_key}"
         }
 
-        url = f"https://{api_endpoint}/v1/projects/litellm-gemini/locations/global/publishers/google/models/{model_id}:streamGenerateContent"
+        url = f"https://{api_endpoint}/v1/projects/huanle-gemini/locations/global/publishers/google/models/{model_id}:streamGenerateContent"
 
         latest_exception = ""
         for i in range(5):
