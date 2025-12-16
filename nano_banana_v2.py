@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import time
 from datetime import datetime
 from io import BytesIO
 
@@ -310,24 +311,39 @@ class ComfyUI_NanoBanana_V2:
             "Authorization": f"Bearer {self.api_key}"
         }
 
-        url = f"https://{api_endpoint}/v1/projects/huanle-gemini/locations/global/publishers/google/models/{model_id}:streamGenerateContent"
+        url = f"https://{api_endpoint}/v1/projects/litellm-gemini/locations/global/publishers/google/models/{model_id}:streamGenerateContent"
 
-        try:
-            response = requests.post(url, json=payload, headers=headers, timeout=600)
-            response.raise_for_status()
+        latest_exception = ""
+        for i in range(5):
+            try:
+                response = requests.post(url, json=payload, headers=headers, timeout=600)
+                response.raise_for_status()
 
-            # Parse the SSE response
-            images, text_content = self.parse_sse_response(response.text)
+                # Parse the SSE response
+                images, text_content = self.parse_sse_response(response.text)
+                if not images:
+                    raise RuntimeError(f"No images generated. Response text: {text_content[:200]}...")
+                return images, text_content
+            except requests.exceptions.Timeout as e:
+                # 限流的话, 重试即可
+                latest_exception = f"API request timed out: {str(e)}"
+                time.sleep(i)
+                continue
+            except requests.exceptions.RequestException as e:
+                content = ""
+                if e.response:
+                    content = e.response.text
+                # 限流的话, 重试即可
+                if e.response.status_code == 429:
+                    time.sleep(i)
+                    latest_exception = f"API request failed: {str(e)}, content={content}"
+                    continue
+                raise RuntimeError(f"API request failed: {str(e)}, content={content}")
+            except Exception as e:
+                raise RuntimeError(f"Error processing API response: {str(e)}")
 
-            if not images:
-                raise RuntimeError(f"No images generated. Response text: {text_content[:200]}...")
-
-            return images, text_content
-
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"API request failed: {str(e)}")
-        except Exception as e:
-            raise RuntimeError(f"Error processing API response: {str(e)}")
+        if latest_exception:
+            raise RuntimeError(f"API request failed after retries: {latest_exception}")
 
     def nano_banana_generate(self, prompt, operation, reference_image_1=None, reference_image_2=None,
                              reference_image_3=None, reference_image_4=None, reference_image_5=None, api_key="",
