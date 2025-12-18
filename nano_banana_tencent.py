@@ -390,7 +390,7 @@ class ComfyUI_NanoBanana_Tencent:
     def nano_banana_generate(self, prompt, operation,
                              reference_image_1=None, reference_image_2=None,
                              reference_image_3=None, reference_image_4=None, reference_image_5=None,
-                             secret_id="", secret_key="", sub_app_id=0, region="ap-guangzhou",
+                             secret_id="", secret_key="", sub_app_id="", region="ap-guangzhou",
                              model_version="3.0", aspect_ratio="", image_size="1K",
                              enable_safety=True, poll_interval=5, timeout=600):
 
@@ -399,7 +399,7 @@ class ComfyUI_NanoBanana_Tencent:
         # 使用传入的参数，如果为空则使用默认值
         actual_secret_id = secret_id.strip() or self.default_secret_id
         actual_secret_key = secret_key.strip() or self.default_secret_key
-        actual_sub_app_id = sub_app_id if sub_app_id > 0 else self.default_sub_app_id
+        actual_sub_app_id = sub_app_id if sub_app_id != "" else self.default_sub_app_id
         actual_sub_app_id = int(actual_sub_app_id)
 
         # 验证凭证
