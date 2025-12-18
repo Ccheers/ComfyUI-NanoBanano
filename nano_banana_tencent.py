@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import os
 import time
 from datetime import datetime
@@ -310,10 +311,13 @@ class ComfyUI_NanoBanana_Tencent:
 
                 response = vod_client_instance.DescribeTaskDetail(request)
 
+                operation_log.append(f"查询任务状态...{response}")
                 # 检查任务状态
                 aigc_task = response.AigcImageTask
                 if aigc_task is None:
-                    raise RuntimeError("任务不存在或非 AIGC 任务")
+                    logging.warning(f"[ComfyUI_NanoBanana_Tencent] AIGC任务({task_id}) 信息为空，继续等待...")
+                    time.sleep(poll_interval)
+                    continue
 
                 status = aigc_task.Status
                 progress = aigc_task.Progress
