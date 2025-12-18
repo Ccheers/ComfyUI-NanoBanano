@@ -1,4 +1,8 @@
 torch>=1.11.0
-pillow>=8.3.0
+pillow>=9.0.0
 numpy>=1.21.0
 requests>=2.25.0
+
+# Tencent Cloud SDK dependencies
+tencentcloud-sdk-python>=3.0.1000
+cos-python-sdk-v5>=1.9.30
