@@ -142,7 +142,7 @@ class ComfyUI_NanoBanana_Tencent:
             apply_req.MediaName = file_name
             # 设置过期时间为 1 小时后
             expire_time = datetime.now().timestamp() + 3600
-            apply_req.ExpireTime = datetime.fromtimestamp(expire_time).strftime("%Y-%m-%dT%H:%M:%S+08:00")
+            apply_req.ExpireTime = datetime.fromtimestamp(expire_time).strftime("%Y-%m-%dT%H:%M:%S%z")
 
             operation_log.append(f"申请上传: {file_name}")
             apply_resp = vod_client_instance.ApplyUpload(apply_req)
