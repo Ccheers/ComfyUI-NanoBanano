@@ -195,7 +195,7 @@ class ComfyUI_NanoBanana_Tencent:
             return file_id
 
         except TencentCloudSDKException as e:
-            raise RuntimeError(f"上传图片到 VOD 失败: {e.message}")
+            raise RuntimeError(f"上传图片到 VOD 失败: {e}")
         except Exception as e:
             raise RuntimeError(f"上传图片到 VOD 失败: {str(e)}")
 
@@ -290,7 +290,7 @@ class ComfyUI_NanoBanana_Tencent:
             return task_id
 
         except TencentCloudSDKException as e:
-            raise RuntimeError(f"创建 AIGC 任务失败: {e.message}")
+            raise RuntimeError(f"创建 AIGC 任务失败: {e}")
 
     def poll_task_status(self, vod_client_instance, sub_app_id, task_id, poll_interval, timeout, operation_log):
         """Poll task status until completion and return result FileURL"""
@@ -348,7 +348,7 @@ class ComfyUI_NanoBanana_Tencent:
                     time.sleep(poll_interval)
 
             except TencentCloudSDKException as e:
-                operation_log.append(f"查询任务状态失败: {e.message}")
+                operation_log.append(f"查询任务状态失败: {e}")
                 time.sleep(poll_interval)
 
     def download_and_convert_image(self, file_url, operation_log):
