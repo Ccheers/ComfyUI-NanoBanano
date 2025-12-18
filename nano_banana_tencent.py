@@ -76,8 +76,8 @@ class ComfyUI_NanoBanana_Tencent:
                     "default": "",
                     "tooltip": "Tencent Cloud Secret Key"
                 }),
-                "sub_app_id": ("INT", {
-                    "default": 0,
+                "sub_app_id": ("STRING", {
+                    "default": "",
                     "tooltip": "Tencent Cloud VOD SubAppID"
                 }),
                 "region": ("STRING", {
@@ -138,7 +138,7 @@ class ComfyUI_NanoBanana_Tencent:
             file_name = f"image_{int(time.time() * 1000)}.jpg"
             apply_req = models.ApplyUploadRequest()
             apply_req.MediaType = "JPG"
-            apply_req.SubAppId = sub_app_id
+            apply_req.SubAppId = int(sub_app_id)
             apply_req.MediaName = file_name
             # 设置过期时间为 1 小时后
             expire_time = datetime.now().timestamp() + 3600
@@ -182,7 +182,7 @@ class ComfyUI_NanoBanana_Tencent:
             # 4. 确认上传
             commit_req = models.CommitUploadRequest()
             commit_req.VodSessionKey = apply_resp.VodSessionKey
-            commit_req.SubAppId = sub_app_id
+            commit_req.SubAppId = int(sub_app_id)
 
             operation_log.append(f"确认上传")
             commit_resp = vod_client_instance.CommitUpload(commit_req)
@@ -252,7 +252,7 @@ class ComfyUI_NanoBanana_Tencent:
         """Create AIGC image task and return TaskID"""
         try:
             request = models.CreateAigcImageTaskRequest()
-            request.SubAppId = sub_app_id
+            request.SubAppId = int(sub_app_id)
             request.ModelName = "GEM"  # Gemini
             request.ModelVersion = "3.0"
 
@@ -304,7 +304,7 @@ class ComfyUI_NanoBanana_Tencent:
             try:
                 request = models.DescribeTaskDetailRequest()
                 request.TaskId = task_id
-                request.SubAppId = sub_app_id
+                request.SubAppId = int(sub_app_id)
 
                 response = vod_client_instance.DescribeTaskDetail(request)
 
@@ -400,6 +400,7 @@ class ComfyUI_NanoBanana_Tencent:
         actual_secret_id = secret_id.strip() or self.default_secret_id
         actual_secret_key = secret_key.strip() or self.default_secret_key
         actual_sub_app_id = sub_app_id if sub_app_id > 0 else self.default_sub_app_id
+        actual_sub_app_id = int(actual_sub_app_id)
 
         # 验证凭证
         if not actual_secret_id or not actual_secret_key:
