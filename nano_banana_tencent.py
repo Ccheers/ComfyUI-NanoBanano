@@ -422,7 +422,7 @@ class ComfyUI_NanoBanana_Tencent:
         try:
             cred = credential.Credential(actual_secret_id, actual_secret_key)
             httpProfile = HttpProfile()
-            httpProfile.endpoint = "vod.tencentcloudapi.com"
+            httpProfile.endpoint = "vod.ap-guangzhou.tencentcloudapi.com"
             clientProfile = ClientProfile()
             clientProfile.httpProfile = httpProfile
             vod_client_instance = vod_client.VodClient(cred, region, clientProfile)
