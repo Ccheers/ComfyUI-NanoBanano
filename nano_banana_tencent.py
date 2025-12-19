@@ -312,12 +312,14 @@ class ComfyUI_NanoBanana_Tencent:
                 response = vod_client_instance.DescribeTaskDetail(request)
 
                 operation_log.append(f"查询任务状态...{response}")
+                if response.Status == "WAITING":
+                    operation_log.append(f"任务状态: WAITING，继续等待...")
+                    time.sleep(poll_interval)
+                    continue
                 # 检查任务状态
                 aigc_task = response.AigcImageTask
                 if aigc_task is None:
-                    logging.warning(f"[ComfyUI_NanoBanana_Tencent] AIGC任务({task_id}) 信息为空，继续等待...")
-                    time.sleep(poll_interval)
-                    continue
+                    raise RuntimeError(f"未找到 AIGC 任务信息, task_id={task_id}, response={response}")
 
                 status = aigc_task.Status
                 progress = aigc_task.Progress
